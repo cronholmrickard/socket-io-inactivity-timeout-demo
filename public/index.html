@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Socket Connection Status</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const socket = io();
+
+        socket.on('connection count', (count) => {
+          document.getElementById(
+            'status',
+          ).innerText = `Current connections: ${count}`;
+        });
+
+        socket.on('connect', () => {
+          document.getElementById('status').innerText = 'Socket connected!';
+        });
+
+        socket.on('disconnect', () => {
+          document.getElementById('status').innerText = 'Socket disconnected!';
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Socket Connection Status</h1>
+    <p id="status">Connecting...</p>
+  </body>
+</html>
