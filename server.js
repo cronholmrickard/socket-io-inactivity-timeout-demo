@@ -5,7 +5,11 @@ const bunyan = require('bunyan');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  pingInterval: 25000, // 25 seconds
+  pingTimeout: 120000, // 2 minutes
+  transports: ['websocket'],
+});
 
 const log = bunyan.createLogger({ name: 'socket-app' });
 

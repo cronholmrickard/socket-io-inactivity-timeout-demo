@@ -3,29 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <title>Socket Connection Status</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const socket = io();
-
-        socket.on('connection count', (count) => {
-          document.getElementById(
-            'status',
-          ).innerText = `Current connections: ${count}`;
-        });
-
-        socket.on('connect', () => {
-          document.getElementById('status').innerText = 'Socket connected!';
-        });
-
-        socket.on('disconnect', () => {
-          document.getElementById('status').innerText = 'Socket disconnected!';
-        });
-      });
-    </script>
   </head>
   <body>
     <h1>Socket Connection Status</h1>
     <p id="status">Connecting...</p>
+    <script>
+      // Initialize Web Worker
+      if (window.Worker) {
+        const worker = new Worker('worker.js');
+
+        // Listen for messages from the worker
+        worker.onmessage = (e) => {
+          const { type, data } = e.data;
+          if (type === 'connection count') {
+            document.getElementById(
+              'status',
+            ).innerText = `Current connections: ${data}`;
+          } else if (type === 'connect') {
+            document.getElementById('status').innerText = 'Socket connected!';
+          } else if (type === 'disconnect') {
+            document.getElementById('status').innerText =
+              'Socket disconnected!';
+          } else if (type === 'reconnect_attempt') {
+            document.getElementById('status').innerText = 'Reconnecting...';
+          } else if (type === 'reconnect_error') {
+            document.getElementById(
+              'status',
+            ).innerText = `Reconnection error: ${data}`;
+          } else if (type === 'reconnect_failed') {
+            document.getElementById('status').innerText =
+              'Reconnection failed.';
+          }
+        };
+      } else {
+        document.getElementById('status').innerText =
+          'Web Workers are not supported in your browser.';
+      }
+    </script>
   </body>
 </html>
