@@ -7,8 +7,8 @@ const { PORT } = require('./env');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  pingInterval: 25000, // 25 seconds
-  pingTimeout: 120000, // 2 minutes
+  pingInterval: 55000, // 55 seconds
+  pingTimeout: 60000, // 60 seconds
   transports: ['websocket'],
 });
 
@@ -18,6 +18,12 @@ let connectionCount = 0;
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
+
+// Endpoint for long polling
+app.get('/poll', (req, res) => {
+  log.info('Received long poll request');
+  res.send('Long poll response');
+});
 
 function formatDuration(ms) {
   let totalSeconds = Math.floor(ms / 1000);
