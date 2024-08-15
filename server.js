@@ -50,6 +50,16 @@ io.on('connection', (socket) => {
     connectionCount--;
     io.emit('connection count', connectionCount);
   });
+
+  socket.on('keep-alive', () => {
+    const now = new Date();
+    const duration = now - connectionStartTime;
+    log.info(
+      `${socket.data.name} is still connected after ${formatDuration(
+        duration,
+      )}`,
+    );
+  });
 });
 
 server.listen(PORT, () => {
