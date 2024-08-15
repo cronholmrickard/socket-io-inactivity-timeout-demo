@@ -12,8 +12,6 @@
     <button id="disconnectBtn" style="display: none">Disconnect</button>
     <p id="statusText"></p>
     <script>
-      let worker;
-
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
           .register('/service-worker.js')
@@ -23,85 +21,48 @@
               registration.scope,
             );
 
+            document.getElementById('name').addEventListener('input', () => {
+              const name = document.getElementById('name').value;
+              document.getElementById('connectBtn').style.display = name
+                ? 'block'
+                : 'none';
+            });
+
             document
               .getElementById('connectBtn')
               .addEventListener('click', () => {
                 const name = document.getElementById('name').value;
                 if (name) {
-                  initWorker(name);
-                  startServiceWorkerPolling(name);
+                  registration.active.postMessage({
+                    type: 'set name',
+                    name,
+                  });
+                  document.getElementById('connectBtn').style.display = 'none';
+                  document.getElementById('disconnectBtn').style.display =
+                    'block';
+                  document.getElementById('name').disabled = true;
                 }
               });
+
+            document
+              .getElementById('disconnectBtn')
+              .addEventListener('click', () => {
+                registration.active.postMessage({ type: 'disconnect' });
+                document.getElementById('statusText').innerText =
+                  'Socket disconnected!';
+                document.getElementById('connectBtn').style.display = 'block';
+                document.getElementById('disconnectBtn').style.display = 'none';
+                document.getElementById('name').disabled = false;
+              });
+
+            navigator.serviceWorker.addEventListener('message', (event) => {
+              document.getElementById('statusText').innerText = event.data;
+            });
           })
           .catch((error) => {
             console.error('Service Worker registration failed:', error);
           });
       }
-
-      function initWorker(name) {
-        worker = new Worker('worker.js');
-        worker.postMessage({ type: 'set name', name });
-
-        worker.onmessage = (e) => {
-          const { type, data } = e.data;
-          if (type === 'connection count') {
-            document.getElementById(
-              'statusText',
-            ).innerText = `Current connections: ${data}`;
-          } else if (type === 'connect') {
-            document.getElementById('statusText').innerText =
-              'Socket connected!';
-            document.getElementById('connectBtn').style.display = 'none';
-            document.getElementById('disconnectBtn').style.display = 'block';
-            document.getElementById('name').disabled = true;
-          } else if (type === 'disconnect') {
-            document.getElementById('statusText').innerText =
-              'Socket disconnected!';
-            document.getElementById('connectBtn').style.display = 'block';
-            document.getElementById('disconnectBtn').style.display = 'none';
-          } else if (type === 'reconnect_attempt') {
-            document.getElementById('statusText').innerText = 'Reconnecting...';
-          } else if (type === 'reconnect_error') {
-            document.getElementById(
-              'statusText',
-            ).innerText = `Reconnection error: ${data}`;
-          } else if (type === 'reconnect_failed') {
-            document.getElementById('statusText').innerText =
-              'Reconnection failed.';
-          }
-        };
-
-        document
-          .getElementById('disconnectBtn')
-          .addEventListener('click', () => {
-            if (worker) {
-              worker.terminate();
-              document.getElementById('statusText').innerText =
-                'Socket disconnected!';
-              document.getElementById('connectBtn').style.display = 'block';
-              document.getElementById('disconnectBtn').style.display = 'none';
-              document.getElementById('name').disabled = false;
-            }
-          });
-      }
-
-      function startServiceWorkerPolling(name) {
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'start-polling',
-            name: name,
-          });
-        } else {
-          console.error('Service Worker controller not available.');
-        }
-      }
-
-      document.getElementById('name').addEventListener('input', () => {
-        const name = document.getElementById('name').value;
-        document.getElementById('connectBtn').style.display = name
-          ? 'block'
-          : 'none';
-      });
     </script>
   </body>
 </html>

@@ -45,15 +45,6 @@ let connectionCount = 0;
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
 
-// Long polling endpoint
-app.get('/poll', (req, res) => {
-  const userName = req.query.name || 'Unknown user';
-  log.info(`${userName} polled the server`);
-  setTimeout(() => {
-    res.status(200).send('polling');
-  }, 25000); // Respond after 25 seconds
-});
-
 function formatDuration(ms) {
   let totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -91,7 +82,7 @@ io.on('connection', (socket) => {
   socket.on('keep-alive', () => {
     const now = new Date();
     const duration = now - connectionStartTime;
-    log.debug(
+    log.info(
       `${socket.data.name} is still connected after ${formatDuration(
         duration,
       )}`,
