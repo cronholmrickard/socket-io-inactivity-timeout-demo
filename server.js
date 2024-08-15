@@ -7,8 +7,8 @@ const { PORT } = require('./env');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  pingInterval: 25000, // 25 seconds
-  pingTimeout: 120000, // 2 minutes
+  pingInterval: 10000, // 10 seconds
+  pingTimeout: 600000, // 10 minutes
   transports: ['websocket'],
 });
 
@@ -18,6 +18,15 @@ let connectionCount = 0;
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
+
+// Long polling endpoint
+app.get('/poll', (req, res) => {
+  const userName = req.query.name || 'Unknown user';
+  log.info(`${userName} polled the server`);
+  setTimeout(() => {
+    res.status(200).send('polling');
+  }, 25000); // Respond after 25 seconds
+});
 
 function formatDuration(ms) {
   let totalSeconds = Math.floor(ms / 1000);
@@ -41,11 +50,13 @@ io.on('connection', (socket) => {
     io.emit('connection count', connectionCount);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     const connectionEndTime = new Date();
     const duration = connectionEndTime - connectionStartTime;
     log.info(
-      `${socket.data.name} disconnected after ${formatDuration(duration)}`,
+      `${socket.data.name} disconnected due to ${reason} after ${formatDuration(
+        duration,
+      )}`,
     );
     connectionCount--;
     io.emit('connection count', connectionCount);

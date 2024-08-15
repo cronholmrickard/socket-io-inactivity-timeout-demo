@@ -14,6 +14,30 @@
     <script>
       let worker;
 
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then((registration) => {
+            console.log(
+              'Service Worker registered with scope:',
+              registration.scope,
+            );
+
+            document
+              .getElementById('connectBtn')
+              .addEventListener('click', () => {
+                const name = document.getElementById('name').value;
+                if (name) {
+                  initWorker(name);
+                  startServiceWorkerPolling(name);
+                }
+              });
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+      }
+
       function initWorker(name) {
         worker = new Worker('worker.js');
         worker.postMessage({ type: 'set name', name });
@@ -46,6 +70,30 @@
               'Reconnection failed.';
           }
         };
+
+        document
+          .getElementById('disconnectBtn')
+          .addEventListener('click', () => {
+            if (worker) {
+              worker.terminate();
+              document.getElementById('statusText').innerText =
+                'Socket disconnected!';
+              document.getElementById('connectBtn').style.display = 'block';
+              document.getElementById('disconnectBtn').style.display = 'none';
+              document.getElementById('name').disabled = false;
+            }
+          });
+      }
+
+      function startServiceWorkerPolling(name) {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'start-polling',
+            name: name,
+          });
+        } else {
+          console.error('Service Worker controller not available.');
+        }
       }
 
       document.getElementById('name').addEventListener('input', () => {
@@ -53,24 +101,6 @@
         document.getElementById('connectBtn').style.display = name
           ? 'block'
           : 'none';
-      });
-
-      document.getElementById('connectBtn').addEventListener('click', () => {
-        const name = document.getElementById('name').value;
-        if (name) {
-          initWorker(name);
-        }
-      });
-
-      document.getElementById('disconnectBtn').addEventListener('click', () => {
-        if (worker) {
-          worker.terminate();
-          document.getElementById('statusText').innerText =
-            'Socket disconnected!';
-          document.getElementById('connectBtn').style.display = 'block';
-          document.getElementById('disconnectBtn').style.display = 'none';
-          document.getElementById('name').disabled = false;
-        }
       });
     </script>
   </body>
