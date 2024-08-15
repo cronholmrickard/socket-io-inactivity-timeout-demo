@@ -13,7 +13,6 @@
     <p id="statusText"></p>
     <script>
       let worker;
-      let visibilityChangeEvent;
 
       function initWorker(name) {
         worker = new Worker('worker.js');
@@ -47,17 +46,6 @@
               'Reconnection failed.';
           }
         };
-
-        // Start long polling
-        startLongPolling();
-      }
-
-      function handleVisibilityChange() {
-        if (document.hidden) {
-          worker.postMessage({ type: 'page hidden' });
-        } else {
-          worker.postMessage({ type: 'page visible' });
-        }
       }
 
       document.getElementById('name').addEventListener('input', () => {
@@ -71,8 +59,6 @@
         const name = document.getElementById('name').value;
         if (name) {
           initWorker(name);
-          visibilityChangeEvent = handleVisibilityChange;
-          document.addEventListener('visibilitychange', visibilityChangeEvent);
         }
       });
 
@@ -84,20 +70,8 @@
           document.getElementById('connectBtn').style.display = 'block';
           document.getElementById('disconnectBtn').style.display = 'none';
           document.getElementById('name').disabled = false;
-          document.removeEventListener(
-            'visibilitychange',
-            visibilityChangeEvent,
-          );
         }
       });
-
-      function startLongPolling() {
-        setInterval(() => {
-          fetch('/poll')
-            .then((response) => response.text())
-            .then((data) => console.log(data));
-        }, 10000); // Poll every 10 seconds
-      }
     </script>
   </body>
 </html>
