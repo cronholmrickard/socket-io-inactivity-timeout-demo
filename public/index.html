@@ -9,6 +9,7 @@
     <p id="status">Enter your name and connect:</p>
     <input type="text" id="name" placeholder="Your name" />
     <button id="connectBtn" style="display: none">Connect</button>
+    <button id="disconnectBtn" style="display: none">Disconnect</button>
     <p id="statusText"></p>
     <script>
       let worker;
@@ -27,11 +28,13 @@
             document.getElementById('statusText').innerText =
               'Socket connected!';
             document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('disconnectBtn').style.display = 'block';
             document.getElementById('name').disabled = true;
           } else if (type === 'disconnect') {
             document.getElementById('statusText').innerText =
               'Socket disconnected!';
             document.getElementById('connectBtn').style.display = 'block';
+            document.getElementById('disconnectBtn').style.display = 'none';
           } else if (type === 'reconnect_attempt') {
             document.getElementById('statusText').innerText = 'Reconnecting...';
           } else if (type === 'reconnect_error') {
@@ -56,6 +59,17 @@
         const name = document.getElementById('name').value;
         if (name) {
           initWorker(name);
+        }
+      });
+
+      document.getElementById('disconnectBtn').addEventListener('click', () => {
+        if (worker) {
+          worker.terminate();
+          document.getElementById('statusText').innerText =
+            'Socket disconnected!';
+          document.getElementById('connectBtn').style.display = 'block';
+          document.getElementById('disconnectBtn').style.display = 'none';
+          document.getElementById('name').disabled = false;
         }
       });
     </script>
