@@ -1,8 +1,36 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const bunyan = require('bunyan');
-const { PORT } = require('./env');
+
+const PORT = process.env.SERVER_PORT || 3300;
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info'; // Default to 'info' if not set
+
+// Custom log format function
+function logFormat() {
+  return {
+    write: (logRecord) => {
+      const log = JSON.parse(logRecord);
+      const time = new Date(log.time)
+        .toISOString()
+        .replace('T', ' ')
+        .replace('Z', '');
+      const level = bunyan.nameFromLevel[log.level].toUpperCase();
+      console.log(`${time} ${level} ${log.msg}`);
+    },
+  };
+}
+
+const log = bunyan.createLogger({
+  name: 'socket-app',
+  streams: [
+    {
+      level: LOG_LEVEL, // Use the log level from .env
+      stream: logFormat(), // Custom format
+    },
+  ],
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -11,8 +39,6 @@ const io = socketIo(server, {
   pingTimeout: 600000, // 10 minutes
   transports: ['websocket'],
 });
-
-const log = bunyan.createLogger({ name: 'socket-app' });
 
 let connectionCount = 0;
 
@@ -65,7 +91,7 @@ io.on('connection', (socket) => {
   socket.on('keep-alive', () => {
     const now = new Date();
     const duration = now - connectionStartTime;
-    log.info(
+    log.debug(
       `${socket.data.name} is still connected after ${formatDuration(
         duration,
       )}`,
