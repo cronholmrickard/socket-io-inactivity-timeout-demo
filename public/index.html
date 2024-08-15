@@ -6,39 +6,58 @@
   </head>
   <body>
     <h1>Socket Connection Status</h1>
-    <p id="status">Connecting...</p>
+    <p id="status">Enter your name and connect:</p>
+    <input type="text" id="name" placeholder="Your name" />
+    <button id="connectBtn" style="display: none">Connect</button>
+    <p id="statusText"></p>
     <script>
-      // Initialize Web Worker
-      if (window.Worker) {
-        const worker = new Worker('worker.js');
+      let worker;
 
-        // Listen for messages from the worker
+      function initWorker(name) {
+        worker = new Worker('worker.js');
+        worker.postMessage({ type: 'set name', name });
+
         worker.onmessage = (e) => {
           const { type, data } = e.data;
           if (type === 'connection count') {
             document.getElementById(
-              'status',
+              'statusText',
             ).innerText = `Current connections: ${data}`;
           } else if (type === 'connect') {
-            document.getElementById('status').innerText = 'Socket connected!';
+            document.getElementById('statusText').innerText =
+              'Socket connected!';
+            document.getElementById('connectBtn').style.display = 'none';
+            document.getElementById('name').disabled = true;
           } else if (type === 'disconnect') {
-            document.getElementById('status').innerText =
+            document.getElementById('statusText').innerText =
               'Socket disconnected!';
+            document.getElementById('connectBtn').style.display = 'block';
           } else if (type === 'reconnect_attempt') {
-            document.getElementById('status').innerText = 'Reconnecting...';
+            document.getElementById('statusText').innerText = 'Reconnecting...';
           } else if (type === 'reconnect_error') {
             document.getElementById(
-              'status',
+              'statusText',
             ).innerText = `Reconnection error: ${data}`;
           } else if (type === 'reconnect_failed') {
-            document.getElementById('status').innerText =
+            document.getElementById('statusText').innerText =
               'Reconnection failed.';
           }
         };
-      } else {
-        document.getElementById('status').innerText =
-          'Web Workers are not supported in your browser.';
       }
+
+      document.getElementById('name').addEventListener('input', () => {
+        const name = document.getElementById('name').value;
+        document.getElementById('connectBtn').style.display = name
+          ? 'block'
+          : 'none';
+      });
+
+      document.getElementById('connectBtn').addEventListener('click', () => {
+        const name = document.getElementById('name').value;
+        if (name) {
+          initWorker(name);
+        }
+      });
     </script>
   </body>
 </html>

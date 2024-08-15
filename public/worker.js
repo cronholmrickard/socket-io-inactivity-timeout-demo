@@ -2,7 +2,14 @@ importScripts('/socket.io/socket.io.js');
 
 let socket;
 
-function connect() {
+onmessage = (e) => {
+  const { type, name } = e.data;
+  if (type === 'set name') {
+    connect(name);
+  }
+};
+
+function connect(name) {
   socket = io({
     transports: ['websocket'],
     reconnection: true,
@@ -12,13 +19,14 @@ function connect() {
     timeout: 20000, // 20 seconds
   });
 
-  socket.on('connection count', (count) => {
-    postMessage({ type: 'connection count', data: count });
-  });
-
   socket.on('connect', () => {
+    socket.emit('set name', name);
     postMessage({ type: 'connect' });
     startKeepAlive();
+  });
+
+  socket.on('connection count', (count) => {
+    postMessage({ type: 'connection count', data: count });
   });
 
   socket.on('disconnect', () => {
@@ -56,6 +64,3 @@ function stopKeepAlive() {
     keepAliveInterval = null;
   }
 }
-
-// Initial connection
-connect();
